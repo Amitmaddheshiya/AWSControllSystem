@@ -17,6 +17,7 @@ class MainApplication : Application(), ReactApplication {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           add(PermissionPackage())
           add(UsbManagerPackage())
+          add(PdfConversionPackage())
           add(KioskPackage())
           add(DeviceIdPackage())
           add(VideoFrameExtractorPackage())

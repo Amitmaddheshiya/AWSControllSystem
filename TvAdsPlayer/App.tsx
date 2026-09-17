@@ -598,6 +598,8 @@ const getRatioFlex = (ratio?: string, isFirst?: boolean) => {
 export default function App() {
   const [sections, setSections] = useState<SectionData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [pdfProgress, setPdfProgress] = useState({ active: false, percent: 0, file: '', currentPage: 0, totalPages: 0 });
+  const pdfProgressVisibleRef = useRef(false);
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [configOpen, setConfigOpen] = useState<boolean>(false);
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
@@ -1006,6 +1008,14 @@ export default function App() {
         await RNFS.mkdir(resolvedDir);
       }
 
+      // Render PDFs on Android's background thread before the unchanged image/video scan.
+      // Files are staged natively; document bytes are never loaded into the JS heap.
+      const pdfConverter = (RNNativeModules as any)?.PdfConversionModule;
+      if (pdfConverter?.convertSectionPdfs) {
+        const converted = await pdfConverter.convertSectionPdfs(resolvedDir);
+        if (converted > 0) console.log(`Converted ${converted} PDF(s) to image pages`);
+      }
+
       console.log('Reading directory contents...');
       const entries = await RNFS.readDir(resolvedDir);
       console.log('Total entries found:', entries.length);
@@ -1118,9 +1128,29 @@ export default function App() {
       console.warn('Error reading Ads directory:', err);
       setSections([]);
     } finally {
-      setLoading(false);
+      if (pdfProgressVisibleRef.current) {
+        setTimeout(() => {
+          pdfProgressVisibleRef.current = false;
+          setPdfProgress((current) => ({ ...current, active: false }));
+          setLoading(false);
+        }, 500);
+      } else {
+        setLoading(false);
+      }
     }
   }, [config.usePendrive, resolveAdsDirectory]);
+
+  // Native renderer reports each saved PDF page without moving document data through JS.
+  useEffect(() => {
+    const pdfConverter = (RNNativeModules as any)?.PdfConversionModule;
+    if (!pdfConverter) return;
+    const emitter = new NativeEventEmitter(pdfConverter);
+    const listener = emitter.addListener('pdfConversionProgress', (event: any) => {
+      pdfProgressVisibleRef.current = true;
+      setPdfProgress({ active: true, percent: Math.max(0, Math.min(100, Number(event?.percent) || 0)), file: String(event?.file || ''), currentPage: Number(event?.currentPage) || 0, totalPages: Number(event?.totalPages) || 0 });
+    });
+    return () => listener.remove();
+  }, []);
 
   // Listen for real-time web CMS events (config updates and media uploads)
   useEffect(() => {
@@ -1243,6 +1273,14 @@ export default function App() {
       scanFolder();
     }
   }, [permissionsLoaded, hasStorage, scanFolder, config.usePendrive]);
+
+  // Pick up PDFs (and ordinary media copied to internal storage or USB) while the app stays open.
+  // This also retries a PDF whose prior conversion was interrupted without requiring an APK restart.
+  useEffect(() => {
+    if (!permissionsLoaded || !hasStorage) return;
+    const interval = setInterval(scanFolder, 15000);
+    return () => clearInterval(interval);
+  }, [permissionsLoaded, hasStorage, scanFolder]);
 
   // Handle D-pad Menu, D-pad Up or OK to open config settings
   useEffect(() => {
@@ -1427,7 +1465,14 @@ export default function App() {
       <View style={styles.darkContainer}>
         <StatusBar hidden />
         <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.statusText}>Scanning storage for Ads...</Text>
+        {pdfProgress.active ? (
+          <View style={styles.pdfProgressCard}>
+            <Text style={styles.pdfProgressTitle}>{pdfProgress.percent === 100 && !pdfProgress.file ? 'Images ready to play' : 'Preparing PDF for playback'}</Text>
+            <Text style={styles.pdfProgressFile}>{pdfProgress.file || (pdfProgress.percent === 100 ? 'Conversion complete' : 'Reading PDF...')}</Text>
+            <View style={styles.pdfProgressTrack}><View style={[styles.pdfProgressFill, { width: `${pdfProgress.percent}%` }]} /></View>
+            <Text style={styles.pdfProgressText}>{pdfProgress.percent}% {pdfProgress.totalPages > 0 ? `• Page ${pdfProgress.currentPage}/${pdfProgress.totalPages}` : ''}</Text>
+          </View>
+        ) : <Text style={styles.statusText}>Scanning storage for Ads...</Text>}
       </View>
     );
   }
@@ -2487,6 +2532,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  pdfProgressCard: { width: '70%', maxWidth: 620, marginTop: 18, alignItems: 'center' },
+  pdfProgressTitle: { color: '#f8fafc', fontSize: 18, fontWeight: '700' },
+  pdfProgressFile: { color: '#94a3b8', fontSize: 13, marginTop: 8, marginBottom: 12 },
+  pdfProgressTrack: { width: '100%', height: 14, backgroundColor: '#1e293b', borderRadius: 7, overflow: 'hidden' },
+  pdfProgressFill: { height: '100%', backgroundColor: '#6366f1', borderRadius: 7 },
+  pdfProgressText: { color: '#e2e8f0', fontSize: 16, fontWeight: '700', marginTop: 9 },
   licenseCard: {
     width: '80%',
     backgroundColor: '#171923',
