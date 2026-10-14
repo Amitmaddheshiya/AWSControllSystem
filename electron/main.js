@@ -136,6 +136,36 @@ ipcMain.handle("bulk-cleanup", async (event, { deviceIds }) => {
     return { success: true, results };
 });
 
+// Bulk Uninstall Profile & Channels (runs in parallel)
+ipcMain.handle("bulk-uninstall-profile-channels", async (event, { deviceIds }) => {
+    const results = await Promise.all(
+        deviceIds.map(async (id) => {
+            try {
+                const r = await adb.uninstallProfileChannels(id);
+                return { deviceId: id, success: r.success, results: r.results, error: r.error };
+            } catch (e) {
+                return { deviceId: id, success: false, error: String(e) };
+            }
+        })
+    );
+    return { success: true, results };
+});
+
+// Bulk Disable Profile & Channels (runs in parallel)
+ipcMain.handle("bulk-disable-profile-channels", async (event, { deviceIds }) => {
+    const results = await Promise.all(
+        deviceIds.map(async (id) => {
+            try {
+                const r = await adb.disableProfileChannels(id);
+                return { deviceId: id, success: r.success, results: r.results, error: r.error };
+            } catch (e) {
+                return { deviceId: id, success: false, error: String(e) };
+            }
+        })
+    );
+    return { success: true, results };
+});
+
 // Bulk Screen Rotation (runs in parallel)
 ipcMain.handle("bulk-rotate", async (event, { deviceIds, mode }) => {
     const results = await Promise.all(

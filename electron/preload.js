@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld("api", {
     bulkInstall: (deviceIds, apkPath) => ipcRenderer.invoke("bulk-install", { deviceIds, apkPath }),
     bulkPush: (deviceIds, dest) => ipcRenderer.invoke("bulk-push", { deviceIds, dest }),
     bulkCleanup: (deviceIds) => ipcRenderer.invoke("bulk-cleanup", { deviceIds }),
+    bulkUninstallProfileChannels: (deviceIds) => ipcRenderer.invoke("bulk-uninstall-profile-channels", { deviceIds }),
+    bulkDisableProfileChannels: (deviceIds) => ipcRenderer.invoke("bulk-disable-profile-channels", { deviceIds }),
     bulkRotate: (deviceIds, mode) => ipcRenderer.invoke("bulk-rotate", { deviceIds, mode }),
     bulkReboot: (deviceIds) => ipcRenderer.invoke("bulk-reboot", { deviceIds }),
     bulkKeyevent: (deviceIds, keycode) => ipcRenderer.invoke("bulk-keyevent", { deviceIds, keycode }),

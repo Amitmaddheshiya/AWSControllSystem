@@ -80,7 +80,8 @@ const unselectAllBtn = document.getElementById("unselectAllBtn");
 const devicesChecklist = document.getElementById("devicesChecklist");
 
 // Bulk Operations Tab
-const bulkCleanupBtn = document.getElementById("bulkCleanupBtn");
+const bulkDisableProfileBtn = document.getElementById("bulkDisableProfileBtn");
+const bulkUninstallProfileBtn = document.getElementById("bulkUninstallProfileBtn");
 const bulkInstallBtn = document.getElementById("bulkInstallBtn");
 const bulkDestPath = document.getElementById("bulkDestPath");
 const bulkPushBtn = document.getElementById("bulkPushBtn");
@@ -109,7 +110,7 @@ function updateTerminalTargetLabel() {
 // Loading state helper
 const bulkInteractiveElements = [
     ipInput, connectBtn, usbBtn, autoNetworkScanBtn, refreshDevicesBtn, selectAllBtn, unselectAllBtn,
-    bulkCleanupBtn, bulkInstallBtn, bulkPushBtn, bulkRebootBtn, ...bulkRotateButtons,
+    bulkDisableProfileBtn, bulkUninstallProfileBtn, bulkInstallBtn, bulkPushBtn, bulkRebootBtn, ...bulkRotateButtons,
     pairCodeInput, pairBtn, pairConnectBtn, autoSetupAdbBtn, autoSetupScrcpyBtn, terminalInput, terminalSendBtn,
     startAdbServerBtn, killAdbServerBtn, refreshDevicesHeaderBtn,
     btnScreenOn, btnScreenOff, dpadUp, dpadDown, dpadLeft, dpadRight, dpadOk,
@@ -768,38 +769,89 @@ function getSelectedTargetsOrWarn() {
     return targets;
 }
 
-// Bulk Cleanup
-bulkCleanupBtn.addEventListener("click", async () => {
+// Bulk Disable Profile & Channels
+bulkDisableProfileBtn.addEventListener("click", async () => {
     const targets = getSelectedTargetsOrWarn();
     if (!targets) return;
 
+    if (!confirm(`Are you sure you want to DISABLE Profile & Channels on ${targets.length} selected device(s)?\n\nThis will disable (freeze) the following packages:\n- tv.cloudwalker.profile\n- tv.cloudwalker.channels`)) {
+        return;
+    }
+
     setBulkControlsLock(true);
-    showStatus(`Running cleanup on ${targets.length} device(s) in parallel...\nApplying settings optimizations and removing bloatware.`, "info");
+    showStatus(`Disabling Profile & Channels on ${targets.length} device(s) in parallel...`, "info");
 
     try {
-        const result = await window.api.bulkCleanup(targets);
+        const result = await window.api.bulkDisableProfileChannels(targets);
         if (result.success) {
             let successCount = 0;
-            let msg = "Bulk Cleanup Completed!\n\n";
+            let msg = "Bulk Disable Completed!\n\n";
 
             result.results.forEach(res => {
                 const deviceLabel = connectedDevices.find(d => d.id === res.deviceId)?.name || res.deviceId;
                 if (res.success) {
                     successCount++;
-                    msg += `✓ ${deviceLabel}: Optimized\n`;
-                    logDeployment(res.deviceId, "Optimize & Cleanup", "Optimizations successfully applied", true);
+                    msg += `✓ ${deviceLabel}: Disabled\n`;
+                    res.results.forEach(item => {
+                        msg += `  - ${item.item}: ${item.status}\n`;
+                    });
+                    logDeployment(res.deviceId, "Disable Profile & Channels", "Profile & Channels successfully disabled", true);
                 } else {
                     msg += `✗ ${deviceLabel}: Failed (${res.error})\n`;
-                    logDeployment(res.deviceId, "Optimize & Cleanup", `Failed: ${res.error}`, false);
+                    logDeployment(res.deviceId, "Disable Profile & Channels", `Failed: ${res.error}`, false);
                 }
             });
 
             showStatus(msg, successCount === targets.length ? "success" : "info");
         } else {
-            showStatus(`Bulk operations failed:\n${result.error}`, "error");
+            showStatus(`Bulk disable failed:\n${result.error}`, "error");
         }
     } catch (err) {
-        showStatus(`Bulk cleanup error:\n${err.message || err}`, "error");
+        showStatus(`Bulk disable error:\n${err.message || err}`, "error");
+    } finally {
+        setBulkControlsLock(false);
+    }
+});
+
+// Bulk Uninstall Profile & Channels
+bulkUninstallProfileBtn.addEventListener("click", async () => {
+    const targets = getSelectedTargetsOrWarn();
+    if (!targets) return;
+
+    if (!confirm(`Are you sure you want to UNINSTALL Profile & Channels from ${targets.length} selected device(s)?\n\nThis will completely remove the following packages:\n- tv.cloudwalker.profile\n- tv.cloudwalker.channels`)) {
+        return;
+    }
+
+    setBulkControlsLock(true);
+    showStatus(`Uninstalling Profile & Channels from ${targets.length} device(s) in parallel...`, "info");
+
+    try {
+        const result = await window.api.bulkUninstallProfileChannels(targets);
+        if (result.success) {
+            let successCount = 0;
+            let msg = "Bulk Uninstall Completed!\n\n";
+
+            result.results.forEach(res => {
+                const deviceLabel = connectedDevices.find(d => d.id === res.deviceId)?.name || res.deviceId;
+                if (res.success) {
+                    successCount++;
+                    msg += `✓ ${deviceLabel}: Uninstalled\n`;
+                    res.results.forEach(item => {
+                        msg += `  - ${item.item}: ${item.status}\n`;
+                    });
+                    logDeployment(res.deviceId, "Uninstall Profile & Channels", "Profile & Channels successfully uninstalled", true);
+                } else {
+                    msg += `✗ ${deviceLabel}: Failed (${res.error})\n`;
+                    logDeployment(res.deviceId, "Uninstall Profile & Channels", `Failed: ${res.error}`, false);
+                }
+            });
+
+            showStatus(msg, successCount === targets.length ? "success" : "info");
+        } else {
+            showStatus(`Bulk uninstall failed:\n${result.error}`, "error");
+        }
+    } catch (err) {
+        showStatus(`Bulk uninstall error:\n${err.message || err}`, "error");
     } finally {
         setBulkControlsLock(false);
     }

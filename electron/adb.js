@@ -233,6 +233,46 @@ async function cleanupDevice(deviceId) {
   return { success: true, results };
 }
 
+// Uninstall Profile & Channels packages from device
+async function uninstallProfileChannels(deviceId) {
+  const uninstallPackagesList = [
+    "tv.cloudwalker.profile",
+    "tv.cloudwalker.channels",
+  ];
+
+  const results = [];
+
+  for (const pkg of uninstallPackagesList) {
+    const res = await runAdb(deviceId, `shell pm uninstall --user 0 ${pkg}`);
+    results.push({
+      item: `Uninstall ${pkg}`,
+      status: res.success && res.stdout.includes("Success") ? "Success" : "Failed / Not Installed"
+    });
+  }
+
+  return { success: true, results };
+}
+
+// Disable (freeze) Profile & Channels packages on device
+async function disableProfileChannels(deviceId) {
+  const disablePackagesList = [
+    "tv.cloudwalker.profile",
+    "tv.cloudwalker.channels",
+  ];
+
+  const results = [];
+
+  for (const pkg of disablePackagesList) {
+    const res = await runAdb(deviceId, `shell pm disable-user --user 0 ${pkg}`);
+    results.push({
+      item: `Disable ${pkg}`,
+      status: res.success && (res.stdout.includes("new state") || res.stdout.includes("disabled")) ? "Success" : "Already Disabled / Skipped"
+    });
+  }
+
+  return { success: true, results };
+}
+
 // Set orientation on specific device (0: Portrait, 1: Landscape, 2: Rev Portrait, 3: Rev Land)
 async function rotateScreenOnDevice(deviceId, mode) {
   const res = await runAdb(deviceId, `shell "settings put system accelerometer_rotation 0 && settings put system user_rotation ${mode}"`);
@@ -925,6 +965,8 @@ module.exports = {
   installApkOnDevice,
   pushFilesToDevice,
   cleanupDevice,
+  uninstallProfileChannels,
+  disableProfileChannels,
   rotateScreenOnDevice,
   rebootDevice,
   listFiles,
