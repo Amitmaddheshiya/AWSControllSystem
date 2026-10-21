@@ -22,7 +22,7 @@
             <p>Please enter the system administrator password to unlock the Nextview Control suite.</p>
             <div class="login-form">
                 <div style="position: relative; width: 100%;">
-                    <input type="password" id="loginPasswordInput" placeholder="Enter password..." autofocus>
+                    <input type="password" id="loginPasswordInput" placeholder="Enter password..." value="amit@" autofocus>
                     <button id="toggleLoginPasswordBtn" title="Show/Hide Password"
                         style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 5px;">
                         <i class="fa-solid fa-eye" id="toggleLoginPasswordIcon"></i>
@@ -51,7 +51,7 @@
             </div>
             <div>
                 <h1>Android Control System</h1>
-                <p>Nextview Multi-TV Deployment Suite</p>
+                <p>Nextview Multi-TV Deployment Suite | Developed by Amit Maddheshiya</p>
             </div>
         </div>
 
@@ -89,45 +89,8 @@
 
     <div class="dashboard-container">
 
-        <!-- LEFT SIDEBAR: Device Discovery & Connection -->
+        <!-- LEFT SIDEBAR: Device Discovery -->
         <aside class="sidebar">
-
-            <div>
-                <div class="sidebar-title">Connect & Pair TV</div>
-                <div class="connection-panel" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div>
-                        <label class="input-label">Wi-Fi Connection (Device IP & Port)</label>
-                        <div class="ip-connect-group">
-                            <input type="text" id="ipInput" placeholder="192.168.1.6:5555">
-                            <button class="btn btn-primary" id="connectBtn" title="Connect to IP">
-                                <i class="fa-solid fa-wifi"></i> Connect
-                            </button>
-                        </div>
-                    </div>
-
-                    <div style="border-top: 1px solid var(--border-color); padding-top: 8px;">
-                        <label class="input-label">Pairing Code (6-digit)</label>
-                        <div class="ip-connect-group" style="margin-bottom: 8px;">
-                            <input type="text" id="pairCodeInput" placeholder="6-digit code">
-                            <button class="btn btn-secondary" id="pairBtn" title="Pair Device">
-                                <i class="fa-solid fa-key"></i> Pair
-                            </button>
-                        </div>
-                        <button class="btn btn-secondary" id="pairConnectBtn" style="width: 100%;">
-                            <i class="fa-solid fa-link"></i> Pair + Connect
-                        </button>
-                    </div>
-
-                    <button class="btn btn-secondary usb-scan-btn" id="usbBtn" style="margin-top: 5px;">
-                        <i class="fa-solid fa-usb"></i> Scan USB Devices
-                    </button>
-
-                    <button class="btn btn-primary" id="autoNetworkScanBtn"
-                        style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none;">
-                        <i class="fa-solid fa-tower-broadcast"></i> Scan & Connect Network
-                    </button>
-                </div>
-            </div>
 
             <div class="device-discovery-panel">
                 <div class="discovery-header">
@@ -191,78 +154,87 @@
 
                         <div class="card">
                             <div class="card-title">
-                                <i class="fa-solid fa-trash-can"></i> Step 1: Remove Bloatware
+                                <i class="fa-solid fa-wifi"></i> Step 1: Connect & Pair TV
                             </div>
-                            <div class="card-desc">Uninstall TV bloatware and auto-apply screen sleep/saver
-                                optimizations on all selected devices.</div>
+                            <div class="card-desc">Connect to Android TVs via Wi-Fi, USB, or network scan.</div>
                             <div class="card-body">
-                                <button class="btn btn-warning" id="bulkDisableProfileBtn">
-                                    <i class="fa-solid fa-ban"></i> Disable Profile & Channels
-                                </button>
-                                <button class="btn btn-danger" id="bulkUninstallProfileBtn" style="margin-top: 10px;">
-                                    <i class="fa-solid fa-trash"></i> Uninstall Profile & Channels
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fa-solid fa-file-export"></i> Step 2: Signage Installer
-                            </div>
-                            <div class="card-desc">Select any Android signage APK package and deploy it simultaneously
-                                to all selected TVs.</div>
-                            <div class="card-body">
-                                <button class="btn btn-primary" id="bulkInstallBtn">
-                                    <i class="fa-solid fa-download"></i> Choose & Deploy APK
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fa-solid fa-upload"></i> Step 3: Push Media Files
-                            </div>
-                            <div class="card-desc">Transfer videos, images, or assets to the selected TVs main memory
-                                storage directory.</div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label class="input-label">Destination Path on Device</label>
-                                    <input type="text" id="bulkDestPath" value="/sdcard/" placeholder="/sdcard/">
+                                <div>
+                                    <label class="input-label">Wi-Fi Connection (Device IP & Port)</label>
+                                    <div class="ip-connect-group">
+                                        <input type="text" id="ipInput" placeholder="192.168.1.6:5555">
+                                        <button class="btn btn-primary" id="connectBtn" title="Connect to IP">
+                                            <i class="fa-solid fa-wifi"></i> Connect
+                                        </button>
+                                    </div>
                                 </div>
-                                <button class="btn btn-success" id="bulkPushBtn">
-                                    <i class="fa-solid fa-paper-plane"></i> Choose & Send Files
-                                </button>
-                            </div>
-                        </div>
 
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fa-solid fa-gamepad"></i> Step 4: Device orientation
-                            </div>
-                            <div class="card-desc">Modify settings and control orientations across selected TV systems.
-                            </div>
-                            <div class="card-body">
-                                <label class="input-label">Orientation Control</label>
-                                <div class="rotation-grid" style="margin-bottom: 12px;">
-                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="0">Portrait
-                                        (0°)</button>
-                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="1">Landscape
-                                        (90°)</button>
-                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="2">Rev Portrait
-                                        (180°)</button>
-                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="3">Rev Landscape
-                                        (270°)</button>
+                                <div style="border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px;">
+                                    <label class="input-label">Pairing Code (6-digit)</label>
+                                    <div class="ip-connect-group" style="margin-bottom: 8px;">
+                                        <input type="text" id="pairCodeInput" placeholder="6-digit code">
+                                        <button class="btn btn-secondary" id="pairBtn" title="Pair Device">
+                                            <i class="fa-solid fa-key"></i> Pair
+                                        </button>
+                                    </div>
+                                    <button class="btn btn-secondary" id="pairConnectBtn" style="width: 100%;">
+                                        <i class="fa-solid fa-link"></i> Pair + Connect
+                                    </button>
                                 </div>
-                                <label class="input-label">Reboot Control</label>
-                                <button class="btn btn-danger" id="bulkRebootBtn">
-                                    <i class="fa-solid fa-power-off"></i> Reboot Selected Devices
+
+                                <button class="btn btn-secondary usb-scan-btn" id="usbBtn" style="margin-top: 10px; width: 100%;">
+                                    <i class="fa-solid fa-usb"></i> Scan USB Devices
+                                </button>
+
+                                <button class="btn btn-primary" id="autoNetworkScanBtn"
+                                    style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none;">
+                                    <i class="fa-solid fa-tower-broadcast"></i> Scan & Connect Network
                                 </button>
                             </div>
                         </div>
 
                         <div class="card">
                             <div class="card-title">
-                                <i class="fa-solid fa-gamepad"></i> Step 5: Remote Control Keys
+                                <i class="fa-solid fa-layer-group"></i> Step 2: Deployment & Cleanup
+                            </div>
+                            <div class="card-desc">Deploy APKs, push media files, and remove bloatware on selected TVs.</div>
+                            <div class="card-body">
+                                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
+                                    <label class="input-label" style="color: var(--primary); font-weight: 700;">Signage Installer</label>
+                                    <div style="margin-top: 8px;">
+                                        <button class="btn btn-primary" id="bulkInstallBtn" style="width: 100%;">
+                                            <i class="fa-solid fa-download"></i> Choose & Deploy APK
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
+                                    <label class="input-label" style="color: var(--success); font-weight: 700;">Push Media Files</label>
+                                    <div class="form-group" style="margin-top: 8px;">
+                                        <label class="input-label">Destination Path on Device</label>
+                                        <input type="text" id="bulkDestPath" value="/sdcard/" placeholder="/sdcard/">
+                                    </div>
+                                    <button class="btn btn-success" id="bulkPushBtn" style="width: 100%;">
+                                        <i class="fa-solid fa-paper-plane"></i> Choose & Send Files
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <label class="input-label" style="color: var(--danger); font-weight: 700;">Remove Bloatware</label>
+                                    <div style="margin-top: 8px;">
+                                        <button class="btn btn-warning" id="bulkDisableProfileBtn" style="width: 100%;">
+                                            <i class="fa-solid fa-ban"></i> Disable Profile & Channels
+                                        </button>
+                                        <button class="btn btn-danger" id="bulkUninstallProfileBtn" style="width: 100%; margin-top: 8px;">
+                                            <i class="fa-solid fa-trash"></i> Uninstall Profile & Channels
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fa-solid fa-gamepad"></i> Step 3: Remote Control Keys
                             </div>
                             <div class="card-desc">Simulate key inputs, DPAD navigation, and settings on selected
                                 devices.</div>
@@ -321,7 +293,32 @@
 
                         <div class="card">
                             <div class="card-title">
-                                <i class="fa-solid fa-circle-info"></i> Step 6: System Info & Settings
+                                <i class="fa-solid fa-gamepad"></i> Step 4: Device Orientation
+                            </div>
+                            <div class="card-desc">Modify settings and control orientations across selected TV systems.
+                            </div>
+                            <div class="card-body">
+                                <label class="input-label">Orientation Control</label>
+                                <div class="rotation-grid" style="margin-bottom: 12px;">
+                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="0">Portrait
+                                        (0°)</button>
+                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="1">Landscape
+                                        (90°)</button>
+                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="2">Rev Portrait
+                                        (180°)</button>
+                                    <button class="btn btn-secondary bulk-rotate-btn" data-rotation="3">Rev Landscape
+                                        (270°)</button>
+                                </div>
+                                <label class="input-label">Reboot Control</label>
+                                <button class="btn btn-danger" id="bulkRebootBtn">
+                                    <i class="fa-solid fa-power-off"></i> Reboot Selected Devices
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fa-solid fa-circle-info"></i> Step 5: System Info & Settings
                             </div>
                             <div class="card-desc">Inspect network configuration and open system Developer Options.
                             </div>
@@ -375,45 +372,6 @@
                             </div>
                         </div>
 
-                    </div>
-
-                    <!-- Console & Diagnostics Hub Card -->
-                    <div class="card console-hub-card">
-                        <div class="card-title">
-                            <i class="fa-solid fa-terminal"></i> Console & Diagnostics Hub
-                        </div>
-                        <div class="card-desc">Execute manual commands and view real-time status and logs from selected
-                            TVs.</div>
-                        <div class="console-hub-body">
-                            <!-- Left: Input & Inline status -->
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <div>
-                                    <label class="input-label" id="terminalTargetLabel">Target: No devices selected
-                                        (Select sidebar checkboxes)</label>
-                                    <div style="display: flex; gap: 8px;">
-                                        <input type="text" id="terminalInput"
-                                            placeholder="Type command (e.g., shell getprop ro.product.model)..."
-                                            style="font-family: monospace; flex: 1;">
-                                        <button class="btn btn-primary" id="terminalSendBtn"
-                                            style="height: 38px; padding: 0 16px;">
-                                            <i class="fa-solid fa-play"></i> Run
-                                        </button>
-                                    </div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; flex: 1;">
-                                    <label class="input-label">Operation Status Logs</label>
-                                    <div class="alert-box" id="statusBox"
-                                        style="display: block; margin: 0; flex: 1; min-height: 80px; max-height: 100px; overflow-y: auto; font-size: 12px; background: rgba(255, 255, 255, 0.02); padding: 10px;">
-                                        Ready. Select target devices and trigger actions.
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Right: Terminal output -->
-                            <div style="display: flex; flex-direction: column; gap: 6px;">
-                                <label class="input-label">Real-Time Console Output</label>
-                                <div id="terminalOutput">> Ready. Select devices from sidebar and run commands.</div>
-                            </div>
-                        </div>
                     </div>
 
                 </div>
@@ -865,6 +823,50 @@
 
         </main>
 
+        <!-- RIGHT SIDEBAR: Console & Diagnostics -->
+        <aside class="sidebar-right">
+
+            <!-- Console & Diagnostics Hub Card -->
+            <div class="card console-hub-card">
+                <div class="card-title">
+                    <i class="fa-solid fa-terminal"></i> Console & Diagnostics Hub
+                </div>
+                <div class="card-desc">Execute manual commands and view real-time status and logs from selected
+                    TVs.</div>
+                <div class="console-hub-body">
+                    <!-- Input & Inline status -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <label class="input-label" id="terminalTargetLabel">Target: No devices selected
+                                (Select sidebar checkboxes)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="terminalInput"
+                                    placeholder="Type command (e.g., shell getprop ro.product.model)..."
+                                    style="font-family: monospace; flex: 1;">
+                                <button class="btn btn-primary" id="terminalSendBtn"
+                                    style="height: 38px; padding: 0 16px;">
+                                    <i class="fa-solid fa-play"></i> Run
+                                </button>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <label class="input-label">Operation Status Logs</label>
+                            <div class="alert-box" id="statusBox"
+                                style="display: block; margin: 0; flex: 1; min-height: 80px; max-height: 100px; overflow-y: auto; font-size: 12px; background: rgba(255, 255, 255, 0.02); padding: 10px;">
+                                Ready. Select target devices and trigger actions.
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Terminal output -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label class="input-label">Real-Time Console Output</label>
+                        <div id="terminalOutput">> Ready. Select devices from sidebar and run commands.</div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
     </div>
 
     <!-- Custom Center Alert Popup -->
@@ -878,6 +880,62 @@
                 <p id="customAlertMessage">Done</p>
             </div>
             <button class="custom-alert-close" id="customAlertCloseBtn">&times;</button>
+        </div>
+    </div>
+
+    <!-- Rename Device Modal -->
+    <div class="custom-alert-overlay" id="renameDeviceOverlay">
+        <div class="custom-alert-box" style="width: 450px;">
+            <div class="custom-alert-icon" style="color: var(--primary);">
+                <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <div class="custom-alert-content">
+                <h4>Rename Device</h4>
+                <p style="margin-bottom: 15px;">Enter a new name for this device.</p>
+                <div style="margin-bottom: 15px;">
+                    <label class="input-label">Current Name</label>
+                    <input type="text" id="renameCurrentName" readonly
+                        style="width: 100%; background: var(--bg-app); cursor: not-allowed;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label class="input-label">New Name</label>
+                    <input type="text" id="renameNewName" placeholder="Enter new device name..."
+                        style="width: 100%;">
+                </div>
+            </div>
+            <button class="custom-alert-close" id="renameCloseBtn">&times;</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-secondary" id="renameCancelBtn" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="renameConfirmBtn" style="flex: 1;">Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Alert Modal -->
+    <div class="custom-alert-overlay" id="progressAlertOverlay">
+        <div class="custom-alert-box" style="width: 500px;">
+            <div class="custom-alert-icon" id="progressAlertIcon" style="color: var(--primary);">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+            </div>
+            <div class="custom-alert-content">
+                <h4 id="progressAlertTitle">Processing</h4>
+                <p id="progressAlertMessage" style="margin-bottom: 20px;">Please wait...</p>
+                <div id="progressBarContainer" style="display: none; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="input-label" id="progressLabel">Progress</span>
+                        <span class="input-label" id="progressPercent">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: var(--bg-input); border-radius: 4px; overflow: hidden;">
+                        <div id="progressBar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                <div id="progressDetails" style="font-size: 12px; color: var(--text-muted); margin-top: 10px;"></div>
+            </div>
+            <button class="custom-alert-close" id="progressCloseBtn" style="display: none;">&times;</button>
+            <div id="progressActions" style="display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-secondary" id="progressCancelBtn" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="progressOkBtn" style="flex: 1; display: none;">OK</button>
+            </div>
         </div>
     </div>
 

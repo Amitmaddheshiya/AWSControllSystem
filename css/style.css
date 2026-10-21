@@ -182,7 +182,7 @@ header {
 .dashboard-container {
     flex: 1;
     display: grid;
-    grid-template-columns: 340px 1fr;
+    grid-template-columns: 420px 1fr 380px;
     height: calc(100vh - 75px);
     overflow: hidden;
     min-height: 0;
@@ -199,6 +199,18 @@ aside.sidebar {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+/* ===== RIGHT SIDEBAR ===== */
+aside.sidebar-right {
+    background-color: var(--bg-sidebar);
+    border-left: 1px solid var(--border-color);
+    padding: 20px;
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-title {
@@ -356,7 +368,8 @@ input[type="search"]:focus {
 }
 
 .devices-checklist-container {
-    height: 350px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -786,20 +799,13 @@ tr:hover td {
 
 /* Console & Diagnostics Hub Layout */
 .console-hub-card {
-    margin-top: 15px;
+    margin-top: 0;
 }
 
 .console-hub-body {
-    display: grid;
-    grid-template-columns: 1.2fr 1.8fr;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
-    align-items: stretch;
-}
-
-@media (max-width: 1024px) {
-    .console-hub-body {
-        grid-template-columns: 1fr;
-    }
 }
 
 #terminalOutput {
@@ -809,8 +815,8 @@ tr:hover td {
     font-family: monospace;
     font-size: 11px;
     color: #58a6ff;
-    height: 170px;
-    max-height: 170px;
+    height: 250px;
+    max-height: 250px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     white-space: pre-wrap;
@@ -1130,6 +1136,34 @@ td {
     color: var(--info);
 }
 
+/* Progress Bar Animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Progress Modal States */
+.progress-success .custom-alert-icon {
+    color: var(--success);
+}
+
+.progress-error .custom-alert-icon {
+    color: var(--danger);
+}
+
+.progress-success #progressBar {
+    background: var(--success);
+}
+
+.progress-error #progressBar {
+    background: var(--danger);
+}
+
 /* ===== SECURITY LOGIN OVERLAY ===== */
 .login-overlay {
     position: fixed;
@@ -1252,7 +1286,7 @@ td {
 /* Extra Large Screens (1440px and above) */
 @media (min-width: 1440px) {
     .dashboard-container {
-        grid-template-columns: 380px 1fr;
+        grid-template-columns: 450px 1fr 400px;
     }
 
     .grid-container {
@@ -1263,7 +1297,7 @@ td {
 /* Large Screens (1200px - 1439px) */
 @media (max-width: 1439px) {
     .dashboard-container {
-        grid-template-columns: 340px 1fr;
+        grid-template-columns: 420px 1fr 380px;
     }
 
     .grid-container {
@@ -1271,10 +1305,10 @@ td {
     }
 }
 
-/* Medium Screens (992px - 1199px) */
-@media (max-width: 1199px) {
+/* Laptop Screens (1024px - 1199px) */
+@media (max-width: 1199px) and (min-width: 1024px) {
     .dashboard-container {
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 350px 1fr 320px;
     }
 
     .grid-container {
@@ -1286,7 +1320,7 @@ td {
     }
 
     header {
-        padding: 0 20px;
+        padding: 0 15px;
     }
 
     .logo-section h1 {
@@ -1295,6 +1329,50 @@ td {
 
     .logo-section p {
         font-size: 10px;
+    }
+
+    .devices-checklist-container {
+        height: 300px;
+    }
+
+    #terminalOutput {
+        height: 150px;
+        max-height: 150px;
+    }
+}
+
+/* Small Laptop/Tablet (992px - 1023px) */
+@media (max-width: 1023px) and (min-width: 992px) {
+    .dashboard-container {
+        grid-template-columns: 320px 1fr;
+    }
+
+    aside.sidebar-right {
+        display: none;
+    }
+
+    .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .other-setup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        padding: 0 15px;
+    }
+
+    .logo-section h1 {
+        font-size: 17px;
+    }
+
+    .logo-section p {
+        font-size: 9px;
+    }
+
+    .devices-checklist-container {
+        height: 280px;
     }
 }
 
@@ -1341,13 +1419,17 @@ td {
         width: 100%;
     }
 
+    aside.sidebar-right {
+        display: none;
+    }
+
     .device-discovery-panel {
         max-height: none;
     }
 
     .devices-checklist-container {
-        height: 300px;
-        max-height: 400px;
+        height: 250px;
+        max-height: 350px;
     }
 
     main.main-area {
@@ -1377,8 +1459,8 @@ td {
     }
 
     #terminalOutput {
-        height: 150px;
-        max-height: 150px;
+        height: 120px;
+        max-height: 120px;
     }
 
     .tab-panel {
@@ -1436,6 +1518,10 @@ td {
         border-bottom: 1px solid var(--border-color);
     }
 
+    aside.sidebar-right {
+        display: none;
+    }
+
     .connection-panel {
         padding: 12px;
     }
@@ -1446,8 +1532,8 @@ td {
     }
 
     .devices-checklist-container {
-        height: 250px;
-        max-height: 350px;
+        height: 200px;
+        max-height: 300px;
     }
 
     main.main-area {
@@ -1488,6 +1574,11 @@ td {
         padding: 0 10px;
     }
 
+    #terminalOutput {
+        height: 100px;
+        max-height: 100px;
+    }
+
     .remote-btn {
         height: 30px;
         font-size: 10px;
@@ -1497,6 +1588,37 @@ td {
         grid-template-columns: repeat(3, 38px);
         grid-template-rows: repeat(3, 38px);
         gap: 4px;
+    }
+}
+
+/* Ultra Small Screens (below 480px) */
+@media (max-width: 479px) {
+    header {
+        padding: 10px;
+    }
+
+    .logo-section h1 {
+        font-size: 15px;
+    }
+
+    .logo-section p {
+        font-size: 8px;
+    }
+
+    .devices-checklist-container {
+        height: 180px;
+        max-height: 250px;
+    }
+
+    .tab-btn {
+        font-size: 10px;
+        padding: 5px 8px;
+        min-width: 100px;
+    }
+
+    #terminalOutput {
+        height: 80px;
+        max-height: 80px;
     }
 
     .dpad-btn {
@@ -1550,203 +1672,6 @@ td {
 
     .tab-panel {
         overflow: visible;
-    }
-}
-
-/* Ultra Small Screens (max 479px) - Small Phones */
-@media (max-width: 479px) {
-    html,
-    body {
-        overflow: auto;
-        height: auto;
-    }
-
-    header {
-        padding: 10px;
-        height: auto;
-    }
-
-    .logo {
-        width: 36px;
-        height: 36px;
-        font-size: 18px;
-    }
-
-    .logo-section h1 {
-        font-size: 14px;
-    }
-
-    .logo-section p {
-        font-size: 8px;
-    }
-
-    .header-controls {
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .adb-server-controls {
-        display: none;
-    }
-
-    .theme-toggle-btn {
-        width: 34px;
-        height: 34px;
-        font-size: 14px;
-    }
-
-    .dashboard-container {
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        overflow: visible;
-    }
-
-    aside.sidebar {
-        padding: 12px;
-        gap: 15px;
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .sidebar-title {
-        font-size: 12px;
-    }
-
-    .connection-panel {
-        padding: 10px;
-    }
-
-    .ip-connect-group {
-        flex-direction: column;
-    }
-
-    .btn {
-        width: 100%;
-    }
-
-    .discovery-actions {
-        flex-direction: column;
-    }
-
-    .discovery-small-btn {
-        width: 100%;
-    }
-
-    .devices-checklist-container {
-        height: 200px;
-        max-height: 300px;
-    }
-
-    main.main-area {
-        padding: 10px;
-        overflow: visible;
-    }
-
-    .tabs-navigation {
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-
-    .tab-btn {
-        font-size: 10px;
-        padding: 6px 8px;
-        flex: 1;
-        min-width: 100px;
-    }
-
-    .grid-container {
-        gap: 8px;
-    }
-
-    .card {
-        padding: 10px;
-    }
-
-    .card-title {
-        font-size: 13px;
-        gap: 8px;
-    }
-
-    .card-desc {
-        font-size: 10px;
-    }
-
-    .rotation-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .remote-row {
-        flex-direction: column;
-    }
-
-    .remote-btn {
-        width: 100%;
-    }
-
-    .dpad-container {
-        grid-template-columns: repeat(3, 34px);
-        grid-template-rows: repeat(3, 34px);
-    }
-
-    .console-hub-body {
-        gap: 10px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    #terminalOutput {
-        height: 120px;
-        max-height: 120px;
-        font-size: 10px;
-    }
-
-    .checklist-item {
-        padding: 8px 10px;
-    }
-
-    .step-text {
-        font-size: 12px;
-    }
-
-    .factory-code-card {
-        padding: 10px;
-    }
-
-    .factory-code-sequence {
-        font-size: 11px;
-        padding: 8px 10px;
-    }
-
-    .progress-container {
-        padding: 10px 12px;
-    }
-
-    .login-box {
-        width: 95%;
-        padding: 20px 15px;
-    }
-
-    .login-box h2 {
-        font-size: 18px;
-    }
-
-    .login-box p {
-        font-size: 12px;
-    }
-
-    .tab-panel {
-        overflow: visible;
-    }
-
-    /* Ensure all buttons are visible */
-    .btn-row {
-        flex-direction: column;
-    }
-
-    .btn-row .btn {
-        width: 100%;
     }
 }
 

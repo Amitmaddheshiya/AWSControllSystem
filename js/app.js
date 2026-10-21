@@ -62,6 +62,31 @@ const loginSubmitBtn = document.getElementById("loginSubmitBtn");
 const loginErrorMessage = document.getElementById("loginErrorMessage");
 const connectedCountBadge = document.getElementById("connectedCountBadge");
 
+// Rename Device Modal selectors
+const renameDeviceOverlay = document.getElementById("renameDeviceOverlay");
+const renameCurrentName = document.getElementById("renameCurrentName");
+const renameNewName = document.getElementById("renameNewName");
+const renameCloseBtn = document.getElementById("renameCloseBtn");
+const renameCancelBtn = document.getElementById("renameCancelBtn");
+const renameConfirmBtn = document.getElementById("renameConfirmBtn");
+let currentRenameDeviceId = null;
+
+// Progress Alert Modal selectors
+const progressAlertOverlay = document.getElementById("progressAlertOverlay");
+const progressAlertTitle = document.getElementById("progressAlertTitle");
+const progressAlertMessage = document.getElementById("progressAlertMessage");
+const progressAlertIcon = document.getElementById("progressAlertIcon");
+const progressBarContainer = document.getElementById("progressBarContainer");
+const progressBar = document.getElementById("progressBar");
+const progressLabel = document.getElementById("progressLabel");
+const progressPercent = document.getElementById("progressPercent");
+const progressDetails = document.getElementById("progressDetails");
+const progressCloseBtn = document.getElementById("progressCloseBtn");
+const progressCancelBtn = document.getElementById("progressCancelBtn");
+const progressOkBtn = document.getElementById("progressOkBtn");
+const progressActions = document.getElementById("progressActions");
+let currentProgressCancelCallback = null;
+
 // Sidebar Setup Panel
 const autoSetupAdbBtn = document.getElementById("autoSetupAdbBtn");
 const adbSetupStatus = document.getElementById("adbSetupStatus");
@@ -178,14 +203,41 @@ document.addEventListener("DOMContentLoaded", () => {
     // 0. Security Verification Dialog Logic
     if (loginOverlay && loginPasswordInput) {
         // Force focus on password input
-        setTimeout(() => loginPasswordInput.focus(), 100);
+        const focusInput = () => {
+            loginPasswordInput.focus();
+            // Move cursor to end of text
+            const val = loginPasswordInput.value;
+            loginPasswordInput.value = "";
+            loginPasswordInput.value = val;
+        };
+
+        setTimeout(focusInput, 100);
+        setTimeout(focusInput, 500);
+
+        // Refocus when clicking on the overlay
+        loginOverlay.addEventListener("click", (e) => {
+            if (e.target === loginOverlay) {
+                focusInput();
+            }
+        });
+
+        // Keep focus on input
+        loginPasswordInput.addEventListener("blur", () => {
+            setTimeout(() => {
+                if (!loginOverlay.classList.contains("hide")) {
+                    loginPasswordInput.focus();
+                }
+            }, 10);
+        });
 
         // Toggle password show/hide
         if (toggleLoginPasswordBtn) {
-            toggleLoginPasswordBtn.addEventListener("click", () => {
+            toggleLoginPasswordBtn.addEventListener("click", (e) => {
+                e.preventDefault();
                 const isPassword = loginPasswordInput.type === "password";
                 loginPasswordInput.type = isPassword ? "text" : "password";
                 toggleLoginPasswordIcon.className = isPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+                setTimeout(() => loginPasswordInput.focus(), 10);
             });
         }
 
@@ -201,8 +253,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 loginErrorMessage.style.display = "block";
                 loginBox.classList.add("shake");
                 // Clear input
-                loginPasswordInput.value = "";
+                loginPasswordInput.value = "amit@";
                 loginPasswordInput.focus();
+                // Move cursor to end
+                setTimeout(() => {
+                    const val = loginPasswordInput.value;
+                    loginPasswordInput.value = "";
+                    loginPasswordInput.value = val;
+                }, 10);
                 // Remove shake class after animation completes
                 setTimeout(() => {
                     loginBox.classList.remove("shake");
@@ -338,6 +396,14 @@ async function pollDevices() {
         const devices = await window.api.getDevicesDetails();
         connectedDevices = devices;
 
+        // Apply saved custom names from localStorage
+        const savedNames = JSON.parse(localStorage.getItem("deviceCustomNames") || "{}");
+        connectedDevices.forEach(dev => {
+            if (savedNames[dev.id]) {
+                dev.name = savedNames[dev.id];
+            }
+        });
+
         // Render Sidebar checklist
         renderDevicesChecklist();
 
@@ -371,9 +437,18 @@ function renderDevicesChecklist() {
         const statusBadgeClass = dev.status === "Online" ? "badge-online" : "badge-offline";
         const checkboxDisabled = dev.status !== "Online" ? "disabled" : "";
 
+        // Remove IP from device name for display
+        const displayName = dev.name.replace(/\s*\(.*?:.*?\)/g, '').trim();
+
         const controlBtn = dev.status === "Online" ? `
-            <button class="btn btn-primary discovery-small-btn" onclick="startRemoteControl('${dev.id}', '${dev.name.replace(/'/g, "\\'")}')" title="Show screen and control device" style="padding: 2px 6px; height: 18px; font-size: 9px; margin-top: 2px; border-radius: 4px; gap: 4px;">
+            <button class="btn btn-primary discovery-small-btn" onclick="startRemoteControl('${dev.id}', '${displayName.replace(/'/g, "\\'")}')" title="Show screen and control device" style="padding: 2px 6px; height: 18px; font-size: 9px; margin-top: 2px; border-radius: 4px; gap: 4px;">
                 <i class="fa-solid fa-desktop" style="font-size: 9px;"></i> Control
+            </button>
+        ` : '';
+
+        const renameBtn = dev.status === "Online" ? `
+            <button class="btn btn-secondary discovery-small-btn" onclick="renameDevice('${dev.id}', '${displayName.replace(/'/g, "\\'")}')" title="Rename device" style="padding: 2px 6px; height: 18px; font-size: 9px; margin-top: 2px; border-radius: 4px; gap: 4px;">
+                <i class="fa-solid fa-pen" style="font-size: 9px;"></i> Rename
             </button>
         ` : '';
 
@@ -382,7 +457,7 @@ function renderDevicesChecklist() {
                 <div class="device-item-left">
                     <input type="checkbox" data-id="${dev.id}" ${isChecked ? 'checked' : ''} ${checkboxDisabled}>
                     <div class="device-item-info">
-                        <div class="device-item-name" title="${dev.name}">${dev.name}</div>
+                        <div class="device-item-name" title="${displayName}">${displayName}</div>
                         <div class="device-item-sub">ID: ${dev.id}</div>
                     </div>
                 </div>
@@ -391,7 +466,10 @@ function renderDevicesChecklist() {
                         <span class="badge ${connectionBadgeClass}">${dev.type}</span>
                         <span class="badge ${statusBadgeClass}">${dev.status}</span>
                     </div>
-                    ${controlBtn}
+                    <div style="display: flex; gap: 4px;">
+                        ${renameBtn}
+                        ${controlBtn}
+                    </div>
                 </div>
             </div>
         `;
@@ -422,7 +500,10 @@ function refreshDeviceDropdowns() {
 
     const optionsHTML = `
         <option value="">-- Choose Target TV --</option>
-        ${onlineDevices.map(d => `<option value="${d.id}">${d.name}</option>`).join("")}
+        ${onlineDevices.map(d => {
+            const displayName = d.name.replace(/\s*\(.*?:.*?\)/g, '').trim();
+            return `<option value="${d.id}">${displayName}</option>`;
+        }).join("")}
     `;
 
     fileManagerDeviceSelect.innerHTML = optionsHTML;
@@ -713,6 +794,201 @@ window.startRemoteControl = async function(deviceId, deviceName) {
     }
 };
 
+// Rename Device function
+window.renameDevice = function(deviceId, currentName) {
+    // Remove IP from current name for display
+    const cleanName = currentName.replace(/\s*\(.*?:.*?\)/g, '').trim();
+
+    // Set current device ID and show modal
+    currentRenameDeviceId = deviceId;
+    renameCurrentName.value = cleanName;
+    renameNewName.value = cleanName;
+    renameDeviceOverlay.classList.add("show");
+
+    // Focus on new name input
+    setTimeout(() => {
+        renameNewName.focus();
+        renameNewName.select();
+    }, 100);
+};
+
+// Close rename modal function
+function closeRenameModal() {
+    renameDeviceOverlay.classList.remove("show");
+    currentRenameDeviceId = null;
+    renameCurrentName.value = "";
+    renameNewName.value = "";
+}
+
+// Rename modal event listeners
+if (renameCloseBtn) {
+    renameCloseBtn.addEventListener("click", closeRenameModal);
+}
+
+if (renameCancelBtn) {
+    renameCancelBtn.addEventListener("click", closeRenameModal);
+}
+
+if (renameConfirmBtn) {
+    renameConfirmBtn.addEventListener("click", () => {
+        const newName = renameNewName.value.trim();
+        const currentName = renameCurrentName.value.trim();
+
+        if (!newName) {
+            showStatus("Please enter a device name.", "error");
+            return;
+        }
+
+        if (newName === currentName) {
+            showStatus("New name is the same as current name.", "info");
+            closeRenameModal();
+            return;
+        }
+
+        if (currentRenameDeviceId) {
+            // Update the device name in the connectedDevices array
+            const deviceIndex = connectedDevices.findIndex(d => d.id === currentRenameDeviceId);
+            if (deviceIndex !== -1) {
+                connectedDevices[deviceIndex].name = newName;
+
+                // Save to localStorage for persistence
+                const savedNames = JSON.parse(localStorage.getItem("deviceCustomNames") || "{}");
+                savedNames[currentRenameDeviceId] = newName;
+                localStorage.setItem("deviceCustomNames", JSON.stringify(savedNames));
+
+                // Re-render the device checklist
+                renderDevicesChecklist();
+                // Refresh device dropdowns
+                refreshDeviceDropdowns();
+                showStatus(`Device renamed to "${newName}" successfully!`, "success");
+            }
+        }
+
+        closeRenameModal();
+    });
+}
+
+// Handle Enter key in rename modal
+if (renameNewName) {
+    renameNewName.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            renameConfirmBtn.click();
+        } else if (e.key === "Escape") {
+            closeRenameModal();
+        }
+    });
+}
+
+// Close modal when clicking outside
+if (renameDeviceOverlay) {
+    renameDeviceOverlay.addEventListener("click", (e) => {
+        if (e.target === renameDeviceOverlay) {
+            closeRenameModal();
+        }
+    });
+}
+
+// Progress Alert Modal functions
+function showProgressAlert(title, message, showProgress = false, cancelCallback = null) {
+    progressAlertTitle.textContent = title;
+    progressAlertMessage.textContent = message;
+    progressAlertIcon.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    progressAlertOverlay.classList.remove("progress-success", "progress-error");
+
+    if (showProgress) {
+        progressBarContainer.style.display = "block";
+        progressBar.style.width = "0%";
+        progressPercent.textContent = "0%";
+        progressLabel.textContent = "Progress";
+    } else {
+        progressBarContainer.style.display = "none";
+    }
+
+    progressDetails.textContent = "";
+    progressCancelBtn.style.display = cancelCallback ? "block" : "none";
+    progressOkBtn.style.display = "none";
+    progressCloseBtn.style.display = "none";
+    currentProgressCancelCallback = cancelCallback;
+
+    progressAlertOverlay.classList.add("show");
+}
+
+function updateProgress(percent, label = null, details = null) {
+    progressBar.style.width = `${percent}%`;
+    progressPercent.textContent = `${percent}%`;
+
+    if (label) {
+        progressLabel.textContent = label;
+    }
+
+    if (details) {
+        progressDetails.textContent = details;
+    }
+}
+
+function setProgressSuccess(title, message, details = null) {
+    progressAlertTitle.textContent = title;
+    progressAlertMessage.textContent = message;
+    progressAlertIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+    progressAlertOverlay.classList.add("progress-success");
+    progressBarContainer.style.display = "none";
+    progressCancelBtn.style.display = "none";
+    progressOkBtn.style.display = "block";
+    progressCloseBtn.style.display = "block";
+
+    if (details) {
+        progressDetails.textContent = details;
+    }
+}
+
+function setProgressError(title, message, details = null) {
+    progressAlertTitle.textContent = title;
+    progressAlertMessage.textContent = message;
+    progressAlertIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+    progressAlertOverlay.classList.add("progress-error");
+    progressBarContainer.style.display = "none";
+    progressCancelBtn.style.display = "none";
+    progressOkBtn.style.display = "block";
+    progressCloseBtn.style.display = "block";
+
+    if (details) {
+        progressDetails.textContent = details;
+    }
+}
+
+function closeProgressAlert() {
+    progressAlertOverlay.classList.remove("show");
+    progressAlertOverlay.classList.remove("progress-success", "progress-error");
+    currentProgressCancelCallback = null;
+}
+
+// Progress modal event listeners
+if (progressCancelBtn) {
+    progressCancelBtn.addEventListener("click", () => {
+        if (currentProgressCancelCallback) {
+            currentProgressCancelCallback();
+        }
+        closeProgressAlert();
+    });
+}
+
+if (progressOkBtn) {
+    progressOkBtn.addEventListener("click", closeProgressAlert);
+}
+
+if (progressCloseBtn) {
+    progressCloseBtn.addEventListener("click", closeProgressAlert);
+}
+
+// Close modal when clicking outside
+if (progressAlertOverlay) {
+    progressAlertOverlay.addEventListener("click", (e) => {
+        if (e.target === progressAlertOverlay && progressOkBtn.style.display !== "none") {
+            closeProgressAlert();
+        }
+    });
+}
+
 // ADB Server Controls bindings
 if (startAdbServerBtn) {
     startAdbServerBtn.addEventListener("click", async () => {
@@ -779,7 +1055,7 @@ bulkDisableProfileBtn.addEventListener("click", async () => {
     }
 
     setBulkControlsLock(true);
-    showStatus(`Disabling Profile & Channels on ${targets.length} device(s) in parallel...`, "info");
+    showProgressAlert("Disabling Profile & Channels", "Disabling Profile & Channels on selected devices...", false);
 
     try {
         const result = await window.api.bulkDisableProfileChannels(targets);
@@ -803,11 +1079,14 @@ bulkDisableProfileBtn.addEventListener("click", async () => {
             });
 
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Disable Complete", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Bulk disable failed:\n${result.error}`, "error");
+            setProgressError("Disable Failed", result.error);
         }
     } catch (err) {
         showStatus(`Bulk disable error:\n${err.message || err}`, "error");
+        setProgressError("Disable Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -823,7 +1102,7 @@ bulkUninstallProfileBtn.addEventListener("click", async () => {
     }
 
     setBulkControlsLock(true);
-    showStatus(`Uninstalling Profile & Channels from ${targets.length} device(s) in parallel...`, "info");
+    showProgressAlert("Uninstalling Profile & Channels", "Uninstalling Profile & Channels from selected devices...", false);
 
     try {
         const result = await window.api.bulkUninstallProfileChannels(targets);
@@ -847,11 +1126,14 @@ bulkUninstallProfileBtn.addEventListener("click", async () => {
             });
 
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Uninstall Complete", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Bulk uninstall failed:\n${result.error}`, "error");
+            setProgressError("Uninstall Failed", result.error);
         }
     } catch (err) {
         showStatus(`Bulk uninstall error:\n${err.message || err}`, "error");
+        setProgressError("Uninstall Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -863,7 +1145,10 @@ bulkInstallBtn.addEventListener("click", async () => {
     if (!targets) return;
 
     setBulkControlsLock(true);
-    showStatus("Please select the signage APK package from the file dialog to deploy...", "info");
+    showProgressAlert("Installing APK", "Deploying signage package to selected devices...", true, () => {
+        // Cancel callback
+        setBulkControlsLock(false);
+    });
 
     try {
         const result = await window.api.bulkInstall(targets, null);
@@ -884,11 +1169,14 @@ bulkInstallBtn.addEventListener("click", async () => {
             });
 
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Installation Complete", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Installation failed or cancelled:\n${result.error}`, "error");
+            setProgressError("Installation Failed", result.error);
         }
     } catch (err) {
         showStatus(`Deployment error:\n${err.message || err}`, "error");
+        setProgressError("Deployment Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -901,7 +1189,10 @@ bulkPushBtn.addEventListener("click", async () => {
 
     const dest = bulkDestPath.value.trim() || "/sdcard/";
     setBulkControlsLock(true);
-    showStatus("Please choose files to push to all selected TVs...", "info");
+    showProgressAlert("Transferring Files", "Pushing media files to selected devices...", true, () => {
+        // Cancel callback
+        setBulkControlsLock(false);
+    });
 
     try {
         const result = await window.api.bulkPush(targets, dest);
@@ -922,11 +1213,14 @@ bulkPushBtn.addEventListener("click", async () => {
             });
 
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Transfer Complete", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`File transfer cancelled or failed:\n${result.error}`, "error");
+            setProgressError("Transfer Failed", result.error);
         }
     } catch (err) {
         showStatus(`Bulk push error:\n${err.message || err}`, "error");
+        setProgressError("Transfer Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -943,7 +1237,7 @@ bulkRotateButtons.forEach(btn => {
         const modeLabel = modes[mode] || mode;
 
         setBulkControlsLock(true);
-        showStatus(`Rotating screens to ${modeLabel} in parallel...`, "info");
+        showProgressAlert("Changing Orientation", `Rotating screens to ${modeLabel}...`, false);
 
         try {
             const result = await window.api.bulkRotate(targets, mode);
@@ -964,11 +1258,14 @@ bulkRotateButtons.forEach(btn => {
                 });
 
                 showStatus(msg, successCount === targets.length ? "success" : "info");
+                setProgressSuccess("Orientation Changed", msg, `${successCount}/${targets.length} devices successful`);
             } else {
                 showStatus(`Rotation operations failed:\n${result.error}`, "error");
+                setProgressError("Rotation Failed", result.error);
             }
         } catch (err) {
             showStatus(`Bulk rotation error:\n${err.message || err}`, "error");
+            setProgressError("Rotation Error", err.message || err);
         } finally {
             setBulkControlsLock(false);
         }
@@ -985,7 +1282,7 @@ bulkRebootBtn.addEventListener("click", async () => {
     }
 
     setBulkControlsLock(true);
-    showStatus("Sending reboot command to selected devices in parallel...", "info");
+    showProgressAlert("Rebooting Devices", "Sending reboot command to selected devices...", false);
 
     try {
         const result = await window.api.bulkReboot(targets);
@@ -1007,12 +1304,15 @@ bulkRebootBtn.addEventListener("click", async () => {
             });
 
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Reboot Complete", msg, `${successCount}/${targets.length} devices rebooting`);
             setTimeout(pollDevices, 3000);
         } else {
             showStatus(`Reboot operations failed:\n${result.error}`, "error");
+            setProgressError("Reboot Failed", result.error);
         }
     } catch (err) {
         showStatus(`Reboot error:\n${err.message || err}`, "error");
+        setProgressError("Reboot Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -1118,7 +1418,7 @@ btnCheckIp.addEventListener("click", async () => {
     if (!targets) return;
 
     setBulkControlsLock(true);
-    showStatus(`Checking IP address on ${targets.length} device(s)...`, "info");
+    showProgressAlert("Checking IP Address", "Querying IP address on selected devices...", false);
 
     try {
         const result = await window.api.bulkCheckIp(targets);
@@ -1138,11 +1438,14 @@ btnCheckIp.addEventListener("click", async () => {
                 }
             });
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("IP Check Complete", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Diagnostics failed: ${result.error}`, "error");
+            setProgressError("IP Check Failed", result.error);
         }
     } catch (err) {
         showStatus(`Execution error: ${err.message || err}`, "error");
+        setProgressError("Check Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -1154,7 +1457,7 @@ btnCheckWifi.addEventListener("click", async () => {
     if (!targets) return;
 
     setBulkControlsLock(true);
-    showStatus(`Querying Wi-Fi configuration on ${targets.length} device(s)...`, "info");
+    showProgressAlert("Checking Wi-Fi", "Querying Wi-Fi configuration on selected devices...", false);
 
     try {
         const result = await window.api.bulkCheckWifi(targets);
@@ -1174,11 +1477,14 @@ btnCheckWifi.addEventListener("click", async () => {
                 }
             });
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Wi-Fi Check Complete", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Diagnostics failed: ${result.error}`, "error");
+            setProgressError("Wi-Fi Check Failed", result.error);
         }
     } catch (err) {
         showStatus(`Execution error: ${err.message || err}`, "error");
+        setProgressError("Check Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -1190,7 +1496,7 @@ btnCheckConnectivity.addEventListener("click", async () => {
     if (!targets) return;
 
     setBulkControlsLock(true);
-    showStatus(`Pinging 8.8.8.8 from ${targets.length} device(s) to verify connectivity...`, "info");
+    showProgressAlert("Checking Connectivity", "Pinging 8.8.8.8 from selected devices...", false);
 
     try {
         const result = await window.api.bulkCheckConnectivity(targets);
@@ -1210,11 +1516,14 @@ btnCheckConnectivity.addEventListener("click", async () => {
                 }
             });
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Connectivity Check Complete", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Diagnostics failed: ${result.error}`, "error");
+            setProgressError("Connectivity Check Failed", result.error);
         }
     } catch (err) {
         showStatus(`Execution error: ${err.message || err}`, "error");
+        setProgressError("Check Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -1226,7 +1535,7 @@ btnOpenDevOptions.addEventListener("click", async () => {
     if (!targets) return;
 
     setBulkControlsLock(true);
-    showStatus(`Opening Developer Options settings screen on ${targets.length} device(s)...`, "info");
+    showProgressAlert("Opening Developer Options", "Launching Developer Options settings screen...", false);
 
     try {
         const result = await window.api.bulkOpenDevOptions(targets);
@@ -1246,11 +1555,14 @@ btnOpenDevOptions.addEventListener("click", async () => {
                 }
             });
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Settings Opened", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Operation failed: ${result.error}`, "error");
+            setProgressError("Operation Failed", result.error);
         }
     } catch (err) {
         showStatus(`Execution error: ${err.message || err}`, "error");
+        setProgressError("Execution Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
@@ -1262,7 +1574,7 @@ async function openBulkServiceMenu(menuType, label) {
     if (!targets) return;
 
     setBulkControlsLock(true);
-    showStatus(`Sending service menu command "${label}" to ${targets.length} device(s)...`, "info");
+    showProgressAlert("Opening Service Menu", `Sending service menu command "${label}"...`, false);
 
     try {
         const result = await window.api.bulkServiceMenu(targets, menuType);
@@ -1282,11 +1594,14 @@ async function openBulkServiceMenu(menuType, label) {
                 }
             });
             showStatus(msg, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Service Menu Opened", msg, `${successCount}/${targets.length} devices successful`);
         } else {
             showStatus(`Operation failed: ${result.error}`, "error");
+            setProgressError("Operation Failed", result.error);
         }
     } catch (err) {
         showStatus(`Execution error: ${err.message || err}`, "error");
+        setProgressError("Execution Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }
