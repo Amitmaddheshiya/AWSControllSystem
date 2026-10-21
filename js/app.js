@@ -71,6 +71,9 @@ const renameCancelBtn = document.getElementById("renameCancelBtn");
 const renameConfirmBtn = document.getElementById("renameConfirmBtn");
 let currentRenameDeviceId = null;
 
+// Device filter state
+let deviceFilter = "all"; // "all", "online", "offline"
+
 // Progress Alert Modal selectors
 const progressAlertOverlay = document.getElementById("progressAlertOverlay");
 const progressAlertTitle = document.getElementById("progressAlertTitle");
@@ -431,7 +434,43 @@ function renderDevicesChecklist() {
         return;
     }
 
-    devicesChecklist.innerHTML = connectedDevices.map(dev => {
+    // Sort devices: Online first, then Offline/Unauthorized
+    const sortedDevices = [...connectedDevices].sort((a, b) => {
+        // Online devices (status === "Online") should come first
+        if (a.status === "Online" && b.status !== "Online") return -1;
+        if (a.status !== "Online" && b.status === "Online") return 1;
+        // If both have same status, sort by name alphabetically
+        return a.name.localeCompare(b.name);
+    });
+
+    // Filter devices based on current filter
+    let filteredDevices = sortedDevices;
+    if (deviceFilter === "online") {
+        filteredDevices = sortedDevices.filter(d => d.status === "Online");
+    } else if (deviceFilter === "offline") {
+        filteredDevices = sortedDevices.filter(d => d.status !== "Online");
+    }
+
+    // Count devices by status
+    const onlineCount = connectedDevices.filter(d => d.status === "Online").length;
+    const offlineCount = connectedDevices.filter(d => d.status !== "Online").length;
+
+    // Build filter buttons HTML
+    const filterButtons = `
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; padding: 8px; background: var(--bg-app); border-radius: 8px;">
+            <button class="btn btn-secondary" onclick="setDeviceFilter('all')" style="flex: 1; padding: 6px 12px; font-size: 11px; ${deviceFilter === 'all' ? 'background: var(--primary); color: white;' : ''}">
+                All (${connectedDevices.length})
+            </button>
+            <button class="btn btn-secondary" onclick="setDeviceFilter('online')" style="flex: 1; padding: 6px 12px; font-size: 11px; ${deviceFilter === 'online' ? 'background: var(--success); color: white;' : ''}">
+                Online (${onlineCount})
+            </button>
+            <button class="btn btn-secondary" onclick="setDeviceFilter('offline')" style="flex: 1; padding: 6px 12px; font-size: 11px; ${deviceFilter === 'offline' ? 'background: var(--danger); color: white;' : ''}">
+                Offline (${offlineCount})
+            </button>
+        </div>
+    `;
+
+    devicesChecklist.innerHTML = filterButtons + filteredDevices.map(dev => {
         const isChecked = selectedDeviceIds.has(dev.id);
         const connectionBadgeClass = dev.type === "Wi-Fi" ? "badge-wifi" : "badge-usb";
         const statusBadgeClass = dev.status === "Online" ? "badge-online" : "badge-offline";
@@ -810,6 +849,12 @@ window.renameDevice = function(deviceId, currentName) {
         renameNewName.focus();
         renameNewName.select();
     }, 100);
+};
+
+// Set device filter function
+window.setDeviceFilter = function(filter) {
+    deviceFilter = filter;
+    renderDevicesChecklist();
 };
 
 // Close rename modal function
