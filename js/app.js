@@ -115,6 +115,8 @@ const bulkDestPath = document.getElementById("bulkDestPath");
 const bulkPushBtn = document.getElementById("bulkPushBtn");
 const bulkRotateButtons = document.querySelectorAll(".bulk-rotate-btn");
 const bulkRebootBtn = document.getElementById("bulkRebootBtn");
+const bulkBlockPopupBtn = document.getElementById("bulkBlockPopupBtn");
+const bulkDisableOtaBtn = document.getElementById("bulkDisableOtaBtn");
 const statusBox = document.getElementById("statusBox");
 
 // Embedded Terminal Controls
@@ -138,7 +140,7 @@ function updateTerminalTargetLabel() {
 // Loading state helper
 const bulkInteractiveElements = [
     ipInput, connectBtn, usbBtn, autoNetworkScanBtn, refreshDevicesBtn, selectAllBtn, unselectAllBtn,
-    bulkDisableProfileBtn, bulkUninstallProfileBtn, bulkInstallBtn, bulkPushBtn, bulkRebootBtn, ...bulkRotateButtons,
+    bulkDisableProfileBtn, bulkUninstallProfileBtn, bulkInstallBtn, bulkPushBtn, bulkRebootBtn, bulkBlockPopupBtn, bulkDisableOtaBtn, ...bulkRotateButtons,
     pairCodeInput, pairBtn, pairConnectBtn, autoSetupAdbBtn, autoSetupScrcpyBtn, terminalInput, terminalSendBtn,
     startAdbServerBtn, killAdbServerBtn, refreshDevicesHeaderBtn,
     btnScreenOn, btnScreenOff, dpadUp, dpadDown, dpadLeft, dpadRight, dpadOk,
@@ -1358,6 +1360,79 @@ bulkRebootBtn.addEventListener("click", async () => {
     } catch (err) {
         showStatus(`Reboot error:\n${err.message || err}`, "error");
         setProgressError("Reboot Error", err.message || err);
+    } finally {
+        setBulkControlsLock(false);
+    }
+});
+
+// Bulk block popup-related commands
+bulkBlockPopupBtn.addEventListener("click", async () => {
+    const targets = getSelectedTargetsOrWarn();
+    if (!targets) return;
+
+    setBulkControlsLock(true);
+    showProgressAlert("Blocking Popups", `Running popup blocking commands on ${targets.length} selected TV(s)...`, false);
+    try {
+        const result = await window.api.bulkBlockPopupCommands(targets);
+        if (result.success) {
+            let successCount = 0;
+            let message = "Popup blocking commands completed.\n\n";
+            result.results.forEach(res => {
+                const deviceLabel = connectedDevices.find(device => device.id === res.deviceId)?.name || res.deviceId;
+                if (res.success) {
+                    successCount++;
+                    message += `✓ ${deviceLabel}: All commands completed\n`;
+                    logDeployment(res.deviceId, "Block Popup Commands", "All popup blocking commands completed", true);
+                } else {
+                    const failed = (res.results || []).filter(command => !command.success);
+                    message += `✗ ${deviceLabel}: ${res.error || `${failed.length} command(s) failed`}\n`;
+                    failed.forEach(command => { message += `  - ${command.command}: ${command.error || "Failed"}\n`; });
+                    logDeployment(res.deviceId, "Block Popup Commands", res.error || "Some commands failed", false);
+                }
+            });
+            showStatus(message, successCount === targets.length ? "success" : "info");
+            setProgressSuccess("Popup Blocking Complete", message, `${successCount}/${targets.length} devices successful`);
+        } else {
+            showStatus(`Popup blocking failed:\n${result.error}`, "error");
+            setProgressError("Popup Blocking Failed", result.error);
+        }
+    } catch (err) {
+        showStatus(`Popup blocking error:\n${err.message || err}`, "error");
+        setProgressError("Popup Blocking Error", err.message || err);
+    } finally {
+        setBulkControlsLock(false);
+    }
+});
+
+// Bulk disable OTA updates and update-related packages.
+bulkDisableOtaBtn.addEventListener("click", async () => {
+    const targets = getSelectedTargetsOrWarn();
+    if (!targets) return;
+
+    setBulkControlsLock(true);
+    showProgressAlert("Disabling OTA Updates", `Running OTA disabling commands on ${targets.length} selected TV(s)...`, false);
+    try {
+        const result = await window.api.bulkDisableOtaUpdates(targets);
+        let successCount = 0;
+        let message = "OTA update disabling completed.\n\n";
+        result.results.forEach(res => {
+            const deviceLabel = connectedDevices.find(device => device.id === res.deviceId)?.name || res.deviceId;
+            if (res.success) {
+                successCount++;
+                message += `✓ ${deviceLabel}: All commands completed\n`;
+                logDeployment(res.deviceId, "Disable OTA Updates", "All OTA disabling commands completed", true);
+            } else {
+                const failed = (res.results || []).filter(command => !command.success);
+                message += `✗ ${deviceLabel}: ${res.error || `${failed.length} command(s) failed`}\n`;
+                failed.forEach(command => { message += `  - ${command.command}: ${command.error || "Failed"}\n`; });
+                logDeployment(res.deviceId, "Disable OTA Updates", res.error || "Some commands failed", false);
+            }
+        });
+        showStatus(message, successCount === targets.length ? "success" : "info");
+        setProgressSuccess("OTA Update Disabling Complete", message, `${successCount}/${targets.length} devices successful`);
+    } catch (err) {
+        showStatus(`OTA update disabling error:\n${err.message || err}`, "error");
+        setProgressError("OTA Update Disabling Error", err.message || err);
     } finally {
         setBulkControlsLock(false);
     }

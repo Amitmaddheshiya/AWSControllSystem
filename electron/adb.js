@@ -958,6 +958,52 @@ async function openServiceMenu(deviceId, menuType) {
   return await runAdb(deviceId, `shell "${sequence}"`);
 }
 
+// Clear Cloudwalker updater/market data and suppress popup-related access.
+async function blockPopupCommands(deviceId) {
+  const commands = [
+    "shell pm clear tv.cloudwalker.updater",
+    "shell pm clear tv.cloudwalker.market",
+    "shell cmd appops set tv.cloudwalker.updater SYSTEM_ALERT_WINDOW ignore",
+    "shell cmd appops set tv.cloudwalker.market SYSTEM_ALERT_WINDOW ignore",
+    "shell cmd appops set tv.cloudwalker.voice SYSTEM_ALERT_WINDOW ignore",
+    "shell cmd appops set tv.cloudwalker.inputserver SYSTEM_ALERT_WINDOW ignore",
+    "shell cmd appops set tv.cloudwalker.updater RUN_IN_BACKGROUND ignore",
+    "shell cmd appops set tv.cloudwalker.updater RUN_ANY_IN_BACKGROUND ignore",
+    "shell cmd appops set tv.cloudwalker.market RUN_IN_BACKGROUND ignore",
+    "shell cmd appops set tv.cloudwalker.market RUN_ANY_IN_BACKGROUND ignore",
+    "shell cmd appops set tv.cloudwalker.updater POST_NOTIFICATION ignore",
+    "shell cmd appops set tv.cloudwalker.market POST_NOTIFICATION ignore",
+    "shell cmd appops set tv.cloudwalker.voice POST_NOTIFICATION ignore",
+    "shell cmd appops set tv.cloudwalker.inputserver POST_NOTIFICATION ignore"
+  ];
+  const results = [];
+  for (const command of commands) {
+    const result = await runAdb(deviceId, command);
+    results.push({ command, success: result.success, output: result.stdout?.trim(), error: result.success ? undefined : result.error });
+  }
+  const failures = results.filter(result => !result.success);
+  return { success: failures.length === 0, results, error: failures.length ? `${failures.length} of ${commands.length} commands failed.` : undefined };
+}
+
+// Disable Cloudwalker update components and automatic update settings.
+async function disableOtaUpdates(deviceId) {
+  const commands = [
+    "shell pm disable-user --user 0 tv.cloudwalker.updater",
+    "shell pm disable-user --user 0 com.cvte.tv.systemupgrade",
+    "shell pm disable-user --user 0 tv.cloudwalker.inputserver",
+    "shell pm disable-user --user 0 tv.cloudwalker.market",
+    "shell settings put global ota_disable_automatic_update 1",
+    "shell settings put global auto_update_apps 0"
+  ];
+  const results = [];
+  for (const command of commands) {
+    const result = await runAdb(deviceId, command);
+    results.push({ command, success: result.success, output: result.stdout?.trim(), error: result.success ? undefined : result.error });
+  }
+  const failures = results.filter(result => !result.success);
+  return { success: failures.length === 0, results, error: failures.length ? `${failures.length} of ${commands.length} commands failed.` : undefined };
+}
+
 module.exports = {
   connectWifi,
   checkUsb,
@@ -993,5 +1039,7 @@ module.exports = {
   checkWifiStatus,
   checkConnectivity,
   openDeveloperOptions,
-  openServiceMenu
+  openServiceMenu,
+  blockPopupCommands,
+  disableOtaUpdates
 };

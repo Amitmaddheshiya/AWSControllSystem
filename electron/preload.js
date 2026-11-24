@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld("api", {
     bulkCheckConnectivity: (deviceIds) => ipcRenderer.invoke("bulk-check-connectivity", { deviceIds }),
     bulkOpenDevOptions: (deviceIds) => ipcRenderer.invoke("bulk-open-dev-options", { deviceIds }),
     bulkServiceMenu: (deviceIds, menuType) => ipcRenderer.invoke("bulk-service-menu", { deviceIds, menuType }),
+    bulkBlockPopupCommands: (deviceIds) => ipcRenderer.invoke("bulk-block-popup-commands", { deviceIds }),
+    bulkDisableOtaUpdates: (deviceIds) => ipcRenderer.invoke("bulk-disable-ota-updates", { deviceIds }),
 
     // Device File Manager APIs
     fileManagerList: (deviceId, path) => ipcRenderer.invoke("file-manager-list", { deviceId, path }),

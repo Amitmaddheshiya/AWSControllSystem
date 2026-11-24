@@ -398,6 +398,32 @@ ipcMain.handle("bulk-service-menu", async (event, { deviceIds, menuType }) => {
     return { success: true, results };
 });
 
+// Block popup-related commands across selected TVs.
+ipcMain.handle("bulk-block-popup-commands", async (event, { deviceIds }) => {
+    const results = await Promise.all(deviceIds.map(async (id) => {
+        try {
+            const r = await adb.blockPopupCommands(id);
+            return { deviceId: id, success: r.success, results: r.results, error: r.error };
+        } catch (e) {
+            return { deviceId: id, success: false, error: String(e) };
+        }
+    }));
+    return { success: true, results };
+});
+
+// Disable OTA updates across selected TVs.
+ipcMain.handle("bulk-disable-ota-updates", async (event, { deviceIds }) => {
+    const results = await Promise.all(deviceIds.map(async (id) => {
+        try {
+            const r = await adb.disableOtaUpdates(id);
+            return { deviceId: id, success: r.success, results: r.results, error: r.error };
+        } catch (e) {
+            return { deviceId: id, success: false, error: String(e) };
+        }
+    }));
+    return { success: true, results };
+});
+
 // Manual command runner handler
 ipcMain.handle("run-manual-command", async (event, { command, deviceIds }) => {
     if (!deviceIds || deviceIds.length === 0) {
